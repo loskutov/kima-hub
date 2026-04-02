@@ -11,6 +11,7 @@ export const searchRouter = Router();
 
 searchRouter.all(["/search3.view", "/search2.view", "/search.view"], wrap(async (req, res) => {
     const query = (req.query.query as string | undefined) ?? "";
+    const trimmedQuery = query.trim();
 
     const artistCount = clamp(parseIntParam(req.query.artistCount as string | undefined, 20), 0, 500);
     const albumCount  = clamp(parseIntParam(req.query.albumCount  as string | undefined, 20), 0, 500);
@@ -22,22 +23,32 @@ searchRouter.all(["/search3.view", "/search2.view", "/search.view"], wrap(async 
     const isSearch3 = req.path.startsWith("/search3");
     const isLegacySearch = req.path.startsWith("/search.") || req.path.startsWith("/search/") || req.path.startsWith("/search");
     const responseKey = isSearch3 ? "searchResult3" : isLegacySearch ? "searchResult" : "searchResult2";
+    const isSearch3Bootstrap = isSearch3 && (trimmedQuery === "" || trimmedQuery === '""');
 
-    if (!query.trim()) {
+    if (trimmedQuery === "" && !isSearch3) {
         return subsonicOk(req, res, { [responseKey]: {} });
     }
 
-    const [artists, rawAlbums, tracks] = await Promise.all([
-        artistCount > 0
-            ? searchService.searchArtists({ query, limit: artistCount, offset: artistOffset })
-            : Promise.resolve([]),
-        albumCount > 0
-            ? searchService.searchAlbums({ query, limit: albumCount, offset: albumOffset })
-            : Promise.resolve([]),
-        songCount > 0
-            ? searchService.searchTracks({ query, limit: songCount, offset: songOffset })
-            : Promise.resolve([]),
-    ]);
+    const [artists, rawAlbums, tracks] = isSearch3Bootstrap
+        ? await searchService.searchSubsonicBootstrap({
+              artistCount,
+              albumCount,
+              songCount,
+              artistOffset,
+              albumOffset,
+              songOffset,
+          }).then(({ artists, albums, tracks }) => [artists, albums, tracks] as const)
+        : await Promise.all([
+              artistCount > 0
+                  ? searchService.searchArtists({ query, limit: artistCount, offset: artistOffset })
+                  : Promise.resolve([]),
+              albumCount > 0
+                  ? searchService.searchAlbums({ query, limit: albumCount, offset: albumOffset })
+                  : Promise.resolve([]),
+              songCount > 0
+                  ? searchService.searchTracks({ query, limit: songCount, offset: songOffset })
+                  : Promise.resolve([]),
+          ]);
 
     // Exclude DISCOVER albums — only library content is visible via Subsonic
     let albums = rawAlbums;

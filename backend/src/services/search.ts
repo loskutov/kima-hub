@@ -383,6 +383,107 @@ export class SearchService {
         }
     }
 
+    async searchSubsonicBootstrap({
+        artistCount,
+        albumCount,
+        songCount,
+        artistOffset,
+        albumOffset,
+        songOffset,
+    }: {
+        artistCount: number;
+        albumCount: number;
+        songCount: number;
+        artistOffset: number;
+        albumOffset: number;
+        songOffset: number;
+    }) {
+        const [artists, albums, tracks] = await Promise.all([
+            artistCount > 0
+                ? prisma.artist.findMany({
+                      where: {
+                          albums: {
+                              some: {
+                                  location: "LIBRARY",
+                                  tracks: { some: { corrupt: false } },
+                              },
+                          },
+                      },
+                      orderBy: [{ name: "asc" }, { id: "asc" }],
+                      skip: artistOffset,
+                      take: artistCount,
+                      select: { id: true, name: true },
+                  })
+                : Promise.resolve([]),
+            albumCount > 0
+                ? prisma.album
+                      .findMany({
+                          where: {
+                              location: "LIBRARY",
+                              tracks: { some: { corrupt: false } },
+                          },
+                          orderBy: [{ title: "asc" }, { id: "asc" }],
+                          skip: albumOffset,
+                          take: albumCount,
+                          select: {
+                              id: true,
+                              title: true,
+                              year: true,
+                              artistId: true,
+                              artist: { select: { name: true } },
+                          },
+                      })
+                      .then((rows) =>
+                          rows.map((r) => ({
+                              id: r.id,
+                              title: r.title,
+                              year: r.year,
+                              artistId: r.artistId,
+                              artistName: r.artist.name,
+                          }))
+                      )
+                : Promise.resolve([]),
+            songCount > 0
+                ? prisma.track
+                      .findMany({
+                          where: {
+                              corrupt: false,
+                              album: { location: "LIBRARY" },
+                          },
+                          orderBy: [{ title: "asc" }, { id: "asc" }],
+                          skip: songOffset,
+                          take: songCount,
+                          select: {
+                              id: true,
+                              title: true,
+                              duration: true,
+                              albumId: true,
+                              album: {
+                                  select: {
+                                      title: true,
+                                      artistId: true,
+                                      artist: { select: { name: true } },
+                                  },
+                              },
+                          },
+                      })
+                      .then((rows) =>
+                          rows.map((r) => ({
+                              id: r.id,
+                              title: r.title,
+                              duration: r.duration,
+                              albumId: r.albumId,
+                              albumTitle: r.album.title,
+                              artistId: r.album.artistId,
+                              artistName: r.album.artist.name,
+                          }))
+                      )
+                : Promise.resolve([]),
+        ]);
+
+        return { artists, albums, tracks };
+    }
+
     /**
      * Search podcasts using PostgreSQL full-text search
      */
