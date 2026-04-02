@@ -34,6 +34,8 @@ export interface AlbumSearchResult {
 export interface TrackSearchResult {
     id: string;
     title: string;
+    trackNo: number | null;
+    discNumber: number | null;
     albumId: string;
     albumTitle: string;
     artistId: string;
@@ -309,6 +311,8 @@ export class SearchService {
             select: {
                 id: true,
                 title: true,
+                trackNo: true,
+                discNumber: true,
                 albumId: true,
                 duration: true,
                 album: {
@@ -333,6 +337,8 @@ export class SearchService {
         return results.map((r) => ({
             id: r.id,
             title: r.title,
+            trackNo: r.trackNo,
+            discNumber: r.discNumber,
             albumId: r.albumId,
             albumTitle: r.album.title,
             artistId: r.album.artistId,
@@ -361,6 +367,8 @@ export class SearchService {
         SELECT
           t.id,
           t.title,
+          t."trackNo",
+          t."discNumber",
           t."albumId",
           t.duration,
           a.title as "albumTitle",
@@ -456,6 +464,8 @@ export class SearchService {
                           select: {
                               id: true,
                               title: true,
+                              trackNo: true,
+                              discNumber: true,
                               duration: true,
                               albumId: true,
                               album: {
@@ -471,6 +481,8 @@ export class SearchService {
                           rows.map((r) => ({
                               id: r.id,
                               title: r.title,
+                              trackNo: r.trackNo,
+                              discNumber: r.discNumber,
                               duration: r.duration,
                               albumId: r.albumId,
                               albumTitle: r.album.title,

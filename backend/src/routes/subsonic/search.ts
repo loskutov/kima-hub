@@ -107,6 +107,8 @@ searchRouter.all(["/search3.view", "/search2.view", "/search.view"], wrap(async 
             "@_albumId": t.albumId,
             "@_coverArt": t.albumId,
             "@_duration": t.duration ? Math.round(t.duration) : 0,
+            "@_track": t.trackNo || undefined,
+            "@_discNumber": t.discNumber ?? undefined,
             "@_type": "music",
             "@_genre": genreMap.get(t.artistId) || undefined,
         }));
