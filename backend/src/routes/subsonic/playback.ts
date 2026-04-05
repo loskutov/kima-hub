@@ -253,10 +253,22 @@ playbackRouter.all("/getCoverArt.view", wrap(async (req, res) => {
     if (!coverUrl) {
         const artist = await prisma.artist.findUnique({
             where: { id },
-            select: { heroUrl: true },
+            select: { heroUrl: true, userHeroUrl: true },
         });
         if (artist) {
-            coverUrl = artist.heroUrl;
+            coverUrl = artist.userHeroUrl || artist.heroUrl;
+        }
+
+        // Artist fallback: use a representative library album cover
+        if (!coverUrl && rawId.startsWith("ar-")) {
+            const album = await prisma.album.findFirst({
+                where: { artistId: id, location: "LIBRARY" },
+                orderBy: [{ year: "desc" }, { title: "asc" }],
+                select: { coverUrl: true, userCoverUrl: true },
+            });
+            if (album) {
+                coverUrl = album.userCoverUrl || album.coverUrl;
+            }
         }
     }
 

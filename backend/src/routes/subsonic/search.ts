@@ -82,6 +82,7 @@ searchRouter.all(["/search3.view", "/search2.view", "/search.view"], wrap(async 
             "@_id": a.id,
             "@_name": a.name,
             "@_coverArt": `ar-${a.id}`,
+            "@_artistImageUrl": a.userHeroUrl || a.heroUrl || undefined,
         }));
     }
 

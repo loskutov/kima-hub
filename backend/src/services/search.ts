@@ -17,6 +17,7 @@ export interface ArtistSearchResult {
     name: string;
     mbid: string;
     heroUrl: string | null;
+    userHeroUrl?: string | null;
     summary?: string;
     rank: number;
 }
@@ -134,6 +135,7 @@ export class SearchService {
                 name: true,
                 mbid: true,
                 heroUrl: true,
+                userHeroUrl: true,
             },
             take: limit,
             skip: offset,
@@ -166,6 +168,7 @@ export class SearchService {
           a.name,
           a.mbid,
           a."heroUrl",
+          a."userHeroUrl",
           a.summary,
           ts_rank(a."searchVector", to_tsquery('english', ${tsquery})) AS rank
         FROM "Artist" a
@@ -420,7 +423,7 @@ export class SearchService {
                       orderBy: [{ name: "asc" }, { id: "asc" }],
                       skip: artistOffset,
                       take: artistCount,
-                      select: { id: true, name: true },
+                      select: { id: true, name: true, heroUrl: true, userHeroUrl: true },
                   })
                 : Promise.resolve([]),
             albumCount > 0
