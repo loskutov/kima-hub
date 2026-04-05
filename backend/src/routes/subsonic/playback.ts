@@ -235,7 +235,9 @@ playbackRouter.all("/getCoverArt.view", wrap(async (req, res) => {
     // Strip client-applied prefixes (ar-, al-, tr-)
     const id = rawId.replace(/^(ar-|al-|tr-)/, "");
 
-    let coverUrl: string | null = null;
+    // Some clients pass native cover references directly as the id value
+    // (e.g. id=native:artists/<file>.jpg).
+    let coverUrl: string | null = rawId.startsWith("native:") ? rawId : null;
 
     // Try album first (most common); ar- prefix skips album lookup since that ID is an artist ID.
     // Falls through to artist/track as a cascade — clients may use any prefix for any entity.
